@@ -126,7 +126,7 @@ function PerfilPage() {
   const renderCadastro = () => (
     <div className="space-y-6">
       <div className="flex flex-col gap-6 rounded-3xl border bg-card p-5 shadow-soft md:flex-row md:items-center">
-        <label className="group relative flex h-20 w-20 cursor-pointer items-center justify-center overflow-hidden rounded-full border border-dashed border-border bg-muted text-muted-foreground transition hover:border-primary hover:bg-accent">
+        <label className="group relative flex h-20 w-20 cursor-pointer items-center justify-center overflow-hidden rounded-full border border-dashed border-border bg-muted text-muted-foreground transition hover:border-primary hover:text-primary">
           {avatar ? <img src={avatar} alt="Foto de perfil" className="h-full w-full object-cover" /> : <UserRound className="h-8 w-8" />}
           <input type="file" accept="image/*" className="sr-only" onChange={onAvatarChange} />
           <span className="absolute bottom-1 right-1 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md">
