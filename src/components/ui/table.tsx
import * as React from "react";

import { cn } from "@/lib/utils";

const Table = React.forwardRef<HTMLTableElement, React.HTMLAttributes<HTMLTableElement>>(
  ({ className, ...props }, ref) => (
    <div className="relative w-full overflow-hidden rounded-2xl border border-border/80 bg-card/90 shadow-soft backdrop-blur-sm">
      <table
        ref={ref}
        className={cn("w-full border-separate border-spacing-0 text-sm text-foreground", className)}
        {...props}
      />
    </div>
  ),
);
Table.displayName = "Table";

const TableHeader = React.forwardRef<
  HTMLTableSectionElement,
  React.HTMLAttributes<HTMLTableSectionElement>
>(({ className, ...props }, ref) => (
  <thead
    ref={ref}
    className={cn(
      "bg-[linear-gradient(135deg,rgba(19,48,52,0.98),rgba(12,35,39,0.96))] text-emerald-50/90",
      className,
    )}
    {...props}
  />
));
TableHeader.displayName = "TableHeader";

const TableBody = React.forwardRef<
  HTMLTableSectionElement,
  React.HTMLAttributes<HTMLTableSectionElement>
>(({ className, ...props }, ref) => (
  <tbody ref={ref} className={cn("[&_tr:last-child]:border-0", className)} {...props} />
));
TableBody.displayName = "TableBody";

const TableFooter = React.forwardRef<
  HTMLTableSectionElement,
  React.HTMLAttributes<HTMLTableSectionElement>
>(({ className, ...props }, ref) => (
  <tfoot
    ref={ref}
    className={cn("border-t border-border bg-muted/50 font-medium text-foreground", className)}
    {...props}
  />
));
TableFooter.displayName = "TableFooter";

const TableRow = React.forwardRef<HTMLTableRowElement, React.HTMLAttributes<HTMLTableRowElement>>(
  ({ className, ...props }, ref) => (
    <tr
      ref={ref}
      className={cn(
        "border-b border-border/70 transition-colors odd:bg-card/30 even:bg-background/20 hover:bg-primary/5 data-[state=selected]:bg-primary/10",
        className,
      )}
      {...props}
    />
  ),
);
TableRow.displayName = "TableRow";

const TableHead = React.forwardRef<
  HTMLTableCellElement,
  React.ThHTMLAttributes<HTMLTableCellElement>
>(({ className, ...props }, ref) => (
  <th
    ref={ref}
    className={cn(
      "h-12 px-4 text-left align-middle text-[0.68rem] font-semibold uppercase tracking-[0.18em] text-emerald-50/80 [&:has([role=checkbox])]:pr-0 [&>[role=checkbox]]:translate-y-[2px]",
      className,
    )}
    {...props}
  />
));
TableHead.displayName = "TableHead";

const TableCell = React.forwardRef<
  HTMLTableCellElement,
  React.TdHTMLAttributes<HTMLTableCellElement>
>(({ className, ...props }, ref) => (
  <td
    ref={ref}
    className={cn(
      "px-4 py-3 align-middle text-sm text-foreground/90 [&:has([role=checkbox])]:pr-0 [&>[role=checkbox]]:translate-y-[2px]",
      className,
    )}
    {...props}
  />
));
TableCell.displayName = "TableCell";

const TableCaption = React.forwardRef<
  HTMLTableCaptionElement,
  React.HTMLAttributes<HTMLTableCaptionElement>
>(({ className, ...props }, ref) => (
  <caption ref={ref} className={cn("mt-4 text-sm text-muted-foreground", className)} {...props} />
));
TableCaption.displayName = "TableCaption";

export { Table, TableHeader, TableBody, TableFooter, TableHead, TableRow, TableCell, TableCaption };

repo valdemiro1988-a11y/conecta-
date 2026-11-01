@@ -1,0 +1,125 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Archivo", "Manrope", sans-serif;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-danger-soft: var(--danger-soft);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+}
+
+:root {
+  --radius: 1rem;
+  --background: oklch(0.08 0.03 192);
+  --foreground: oklch(0.97 0.018 170);
+  --card: oklch(0.12 0.032 189);
+  --card-foreground: oklch(0.97 0.018 170);
+  --popover: oklch(0.13 0.028 183);
+  --popover-foreground: oklch(0.97 0.018 170);
+  --primary: oklch(0.74 0.16 165);
+  --primary-foreground: oklch(0.09 0.02 188);
+  --secondary: oklch(0.64 0.14 150);
+  --secondary-foreground: oklch(0.1 0.02 186);
+  --muted: oklch(0.17 0.025 176);
+  --muted-foreground: oklch(0.78 0.04 176);
+  --accent: oklch(0.8 0.12 146);
+  --accent-foreground: oklch(0.1 0.02 180);
+  --destructive: oklch(0.64 0.21 18);
+  --destructive-foreground: oklch(0.99 0 0);
+  --success: oklch(0.68 0.16 150);
+  --success-soft: oklch(0.13 0.03 158);
+  --danger-soft: oklch(0.17 0.04 18);
+  --warning: oklch(0.76 0.16 66);
+  --warning-soft: oklch(0.18 0.05 66);
+  --invoice-brand: #1f7f72;
+  --invoice-paper: #f8faf8;
+  --invoice-ink: #0e2a2f;
+  --invoice-muted: #577a7a;
+  --border: oklch(0.23 0.03 180 / 0.9);
+  --input: oklch(0.17 0.024 180);
+  --ring: oklch(0.76 0.16 165);
+  --sidebar: oklch(0.09 0.024 187);
+  --chart-1: oklch(0.74 0.16 165);
+  --chart-2: oklch(0.64 0.14 150);
+  --chart-3: oklch(0.79 0.12 146);
+  --chart-4: oklch(0.82 0.08 95);
+  --chart-5: oklch(0.7 0.05 180);
+  --gradient-brand: linear-gradient(135deg, oklch(0.72 0.16 165), oklch(0.82 0.12 146));
+  --gradient-hero: linear-gradient(135deg, oklch(0.09 0.03 192), oklch(0.14 0.04 180) 45%, oklch(0.2 0.05 150));
+  --gradient-card: linear-gradient(135deg, oklch(0.17 0.04 170), oklch(0.23 0.06 150));
+  --shadow-soft: 0 18px 36px rgba(3, 17, 19, 0.38);
+}
+
+@layer base {
+  * { border-color: var(--color-border); }
+  html { scroll-behavior: smooth; }
+  body {
+    background:
+      radial-gradient(circle at top, rgba(92, 213, 196, 0.18), transparent 28%),
+      linear-gradient(180deg, var(--background) 0%, color-mix(in srgb, var(--background) 92%, black) 100%);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    letter-spacing: -0.03em;
+  }
+  ::selection {
+    background: rgba(122, 224, 203, 0.35);
+    color: var(--foreground);
+  }
+}
+
+@utility bg-brand { background-image: var(--gradient-brand); }
+@utility bg-hero { background-image: var(--gradient-hero); }
+@utility bg-card-gradient { background-image: var(--gradient-card); }
+@utility shadow-soft { box-shadow: var(--shadow-soft); }
+@utility text-brand {
+  background-image: var(--gradient-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@media print {
+  .no-print { display: none !important; }
+}
+
