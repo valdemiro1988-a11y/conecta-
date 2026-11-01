@@ -2,7 +2,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState, type ReactNode } from "react";
 import {
-  CalendarCheck, CalendarDays, History, Layers, LineChart, LogOut, Menu, ScrollText, TrendingDown, TrendingUp, Wallet,
+  CalendarCheck, CalendarDays, History, Layers, LineChart, LogOut, Menu, TrendingDown, TrendingUp, UserRound, Wallet,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Logo } from "@/components/Logo";
@@ -22,6 +22,7 @@ export type AppPage =
   | "cotacoes"
   | "moedas"
   | "agenda"
+  | "perfil"
   | "auditoria";
 
 export interface AppUser {
@@ -149,8 +150,8 @@ export function AppShell({
       <NavLink to="/painel" icon={Wallet} label="Carteira" active={active === "carteira"} indent={indent} onNavigate={onNavigate} />
       <NavLink to="/cotacoes" icon={LineChart} label="Bolsa de Valores" active={active === "cotacoes"} indent={indent} onNavigate={onNavigate} />
       <NavLink to="/moedas" icon={LineChart} label="Moedas" active={active === "moedas"} indent={indent} onNavigate={onNavigate} />
+      <NavLink to="/perfil" icon={UserRound} label="Perfil" active={active === "perfil"} indent={indent} onNavigate={onNavigate} />
       <div className="px-3 pt-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Sistema</div>
-      <NavLink to="/auditoria" icon={ScrollText} label="Logs de Auditoria" active={active === "auditoria"} indent={indent} onNavigate={onNavigate} />
     </>
   );
 
