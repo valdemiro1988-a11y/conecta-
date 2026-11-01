@@ -125,7 +125,7 @@ function PerfilPage() {
 
   const renderCadastro = () => (
     <div className="space-y-6">
-      <div className="flex flex-col gap-6 rounded-2xl border bg-card p-5 shadow-soft md:flex-row md:items-center">
+      <div className="flex flex-col gap-6 rounded-3xl border bg-card p-5 shadow-soft md:flex-row md:items-center">
         <label className="group relative flex h-20 w-20 cursor-pointer items-center justify-center overflow-hidden rounded-full border border-dashed border-border bg-muted text-muted-foreground transition hover:border-primary hover:bg-accent">
           {avatar ? <img src={avatar} alt="Foto de perfil" className="h-full w-full object-cover" /> : <UserRound className="h-8 w-8" />}
           <input type="file" accept="image/*" className="sr-only" onChange={onAvatarChange} />
@@ -177,7 +177,7 @@ function PerfilPage() {
         </div>
       </div>
 
-      <div className="rounded-2xl border bg-card p-5 shadow-soft">
+      <div className="rounded-3xl border bg-card p-5 shadow-soft">
         <div className="mb-4 flex items-center gap-2"><Lock className="h-4 w-4 text-muted-foreground" /><h3 className="font-semibold">Senha</h3></div>
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
@@ -191,7 +191,7 @@ function PerfilPage() {
         </div>
       </div>
 
-      <div className="rounded-2xl border bg-card p-5 shadow-soft">
+      <div className="rounded-3xl border bg-card p-5 shadow-soft">
         <div className="mb-4 flex items-center justify-between gap-2">
           <h3 className="font-semibold">Campos personalizados</h3>
           <Button type="button" variant="outline" size="sm" onClick={addCustomField}><Plus className="mr-1 h-4 w-4" />Adicionar campo</Button>
@@ -199,7 +199,7 @@ function PerfilPage() {
 
         <div className="space-y-3">
           {customFields.map((field) => (
-            <div key={field.id} className="grid gap-2 rounded-xl border bg-muted/30 p-3 md:grid-cols-[1fr_1.3fr]">
+            <div key={field.id} className="grid gap-2 rounded-2xl border bg-muted/30 p-3 md:grid-cols-[1fr_1.3fr]">
               <Input value={field.label} onChange={(e) => updateCustomField(field.id, 'label', e.target.value)} aria-label="Nome do campo" />
               <Input value={field.value} onChange={(e) => updateCustomField(field.id, 'value', e.target.value)} aria-label="Valor do campo" />
             </div>
@@ -211,7 +211,7 @@ function PerfilPage() {
 
   const renderConfiguracao = () => (
     <div className="space-y-6">
-      <div className="rounded-2xl border bg-card p-5 shadow-soft">
+      <div className="rounded-3xl border bg-card p-5 shadow-soft">
         <div className="mb-4 flex items-center gap-2"><SunMedium className="h-4 w-4 text-muted-foreground" /><h3 className="font-semibold">Tema</h3></div>
         <div className="flex flex-wrap gap-3">
           {(['light', 'dark'] as const).map((option) => (
@@ -232,7 +232,7 @@ function PerfilPage() {
         <p className="mt-4 text-sm text-muted-foreground">Ajuste de aparência da área do perfil e do painel principal.</p>
       </div>
 
-      <div className="rounded-2xl border bg-card p-5 shadow-soft">
+      <div className="rounded-3xl border bg-card p-5 shadow-soft">
         <div className="mb-4 flex items-center gap-2"><Database className="h-4 w-4 text-muted-foreground" /><h3 className="font-semibold">Backup e restauração</h3></div>
         <div className="grid gap-4 md:grid-cols-2">
           <Button type="button" variant="outline" className="justify-start" onClick={() => window.alert('Backup solicitado.')}> 
@@ -244,11 +244,11 @@ function PerfilPage() {
         </div>
       </div>
 
-      <div className="rounded-2xl border bg-card p-5 shadow-soft">
+      <div className="rounded-3xl border bg-card p-5 shadow-soft">
         <div className="mb-4 flex items-center gap-2"><ChevronRight className="h-4 w-4 text-muted-foreground" /><h3 className="font-semibold">Menu lateral</h3></div>
         <div className="space-y-2">
           {sidebarLinks.map((link, index) => (
-            <div key={link.id} className="flex items-center gap-3 rounded-xl border bg-muted/30 p-3">
+            <div key={link.id} className="flex items-center gap-3 rounded-2xl border bg-muted/30 p-3">
               <div className="flex flex-1 items-center justify-between gap-3">
                 <span className="font-medium">{link.label}</span>
                 <Switch checked={link.enabled} onCheckedChange={(value) => setSidebarLinks((current) => current.map((item) => (item.id === link.id ? { ...item, enabled: Boolean(value) } : item)))} />
@@ -266,7 +266,7 @@ function PerfilPage() {
 
   const renderSistema = () => (
     <div className="space-y-6">
-      <div className="rounded-2xl border bg-card p-5 shadow-soft">
+      <div className="rounded-3xl border bg-card p-5 shadow-soft">
         <div className="mb-4 flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-muted-foreground" /><h3 className="font-semibold">Segurança e acesso</h3></div>
         <div className="grid gap-4 md:grid-cols-2">
           <Button type="button" variant="outline" className="justify-start" onClick={() => window.alert('Redefinição de senha iniciada.') }>
@@ -284,14 +284,19 @@ function PerfilPage() {
     <AppShell active="perfil" user={user}>
       <div className={`min-h-[80vh] p-6 lg:p-8 ${theme === 'dark' ? 'bg-slate-950 text-slate-50' : 'bg-background text-foreground'}`}>
         <div className="mx-auto max-w-6xl">
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b pb-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full border bg-primary/10 text-primary">
-                {avatar ? <img src={avatar} alt="Foto de perfil" className="h-full w-full rounded-full object-cover" /> : <UserRound className="h-6 w-6" />}
+          <div className="mb-6 rounded-3xl border bg-card/80 p-5 shadow-soft backdrop-blur-sm">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full border bg-primary/10 text-primary shadow-sm ring-1 ring-primary/10">
+                  {avatar ? <img src={avatar} alt="Foto de perfil" className="h-full w-full rounded-full object-cover" /> : <UserRound className="h-7 w-7" />}
+                </div>
+                <div>
+                  <div className="text-2xl font-extrabold tracking-tight">{form.name}</div>
+                  <div className="text-sm text-muted-foreground">{form.email}</div>
+                </div>
               </div>
-              <div>
-                <div className="text-2xl font-extrabold tracking-tight">{form.name}</div>
-                <div className="text-sm text-muted-foreground">{form.email}</div>
+              <div className="rounded-full border bg-muted/50 px-3 py-1 text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
+                Conta ativa
               </div>
             </div>
           </div>
