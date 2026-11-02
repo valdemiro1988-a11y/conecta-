@@ -1,0 +1,405 @@
+import { useState } from 'react';
+import { Link } from '@tanstack/react-router';
+import { useServerFn } from '@tanstack/react-start';
+import { Plus, RefreshCw, Paperclip, Pencil, Check, ArrowLeft } from 'lucide-react';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { CONTRACT_STATUSES, contractStatus, fullyPaid, amountDue, installmentNote } from '@/lib/finance/contract-plan';
+import { setRevenueContractStatus, editRevenueInstallment } from '@/lib/finance/contracts.functions';
+import { formatBRL, formatDateBR, diffLabel, parseBRL } from '@/lib/finance/money';
+import { todayBR, type RevenueContract, type RevenueEntry } from '@/lib/finance/revenue';
+import { ContractInvoiceDialog } from './ContractInvoiceDialog';
+
+export function ContractWorkspace({
+  contracts,
+  entries,
+  contractId,
+  onNew,
+  onReceive,
+  onFiles,
+  onSaved,
+}: {
+  contracts: RevenueContract[];
+  entries: RevenueEntry[];
+  contractId: string | undefined;
+  onNew: () => void;
+  onReceive: (entry: RevenueEntry) => void;
+  onFiles: (entry: RevenueEntry) => void;
+  onSaved: () => void;
+}) {
+  const today = todayBR();
+  const [search, setSearch] = useState('');
+  const [selected, setSelected] = useState<string[]>([]);
+  const [invoiceIds, setInvoiceIds] = useState<string[] | null>(null);
+  const [edit, setEdit] = useState<RevenueEntry | null>(null);
+
+  const statusFn = useServerFn(setRevenueContractStatus);
+  const editFn = useServerFn(editRevenueInstallment);
+  const c = contracts.find((contract) => contract.id === contractId);
+  const list = entries.filter((entry) => entry.contract_id === contractId);
+  const paid = list.filter(fullyPaid);
+  const pending = list.filter((entry) => !fullyPaid(entry));
+  const totalDue = pending.reduce((sum, entry) => sum + amountDue(entry), 0);
+
+  const filteredContracts = contracts.filter((contract) => {
+    const term = search.toLowerCase();
+    if (!term) return true;
+    return `${contract.title} ${contract.buyer} ${contract.cpf}`.toLowerCase().includes(term);
+  });
+
+  const stat = (label: string, value: string, tone = '') => (
+    <div className="rounded-2xl border border-[#dfe9e2] bg-[#f7faf7] p-3.5 shadow-sm">
+      <dt className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#5f7a77]">{label}</dt>
+      <dd className={`mt-1.5 break-words text-lg font-bold text-[#17342f] ${tone}`}>{value}</dd>
+    </div>
+  );
+
+  async function status(id: string, value: string) {
+    try {
+      await statusFn({ data: { id, status: value as (typeof CONTRACT_STATUSES)[number] } });
+      onSaved();
+    } catch (error) {
+      toast.error((error as Error).message);
+    }
+  }
+
+  function selector(contract: RevenueContract, items: RevenueEntry[]) {
+    return (
+      <Select value={contractStatus(contract.status, items, today)} onValueChange={(value) => status(contract.id, value)}>
+        <SelectTrigger className="h-10 w-full rounded-xl border border-[#dfe9e2] bg-white text-sm text-[#18312f] shadow-sm focus:ring-2 focus:ring-[#70b5a0]">
+          <SelectValue placeholder="Status" />
+        </SelectTrigger>
+        <SelectContent>
+          {CONTRACT_STATUSES.map((statusOption) => (
+            <SelectItem key={statusOption} value={statusOption}>
+              {statusOption}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    );
+  }
+
+  if (!contractId) {
+    return (
+      <div className="space-y-6 p-6">
+        <div className="rounded-[22px] border border-[#dfe9e2] bg-[#f3faf5] p-4 shadow-[0_12px_24px_rgba(19,45,42,0.04)]">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#5f7a77]">Controle financeiro</p>
+              <h1 className="mt-2 text-[2rem] font-black leading-tight text-[#17342f]">Contratos parcelados</h1>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button asChild variant="outline" className="h-10 rounded-xl border-[#cfe2da] bg-white px-4 text-sm font-semibold text-[#17342f] hover:bg-[#edf7f2]">
+                <Link to="/crediario">
+                  <ArrowLeft className="size-4" />
+                  Voltar
+                </Link>
+              </Button>
+              <Button
+                variant="brand"
+                className="h-10 rounded-xl bg-[#2f8175] px-4 text-sm font-semibold text-white shadow-[0_10px_20px_rgba(47,129,117,0.22)] hover:bg-[#286f66]"
+                onClick={onNew}
+              >
+                <Plus className="size-4" />
+                Novo contrato
+              </Button>
+            </div>
+          </div>
+
+          <div className="mt-5">
+            <label htmlFor="contract-search" className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.18em] text-[#5f7a77]">
+              Busca
+            </label>
+            <Input
+              id="contract-search"
+              aria-label="Buscar contrato"
+              placeholder="Buscar fonte, nome ou CPF"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              className="h-11 rounded-xl border-[#dfe9e2] bg-white text-sm text-[#1d3935] shadow-sm placeholder:text-[#718884] focus-visible:ring-2 focus-visible:ring-[#7dc5b0]"
+            />
+          </div>
+        </div>
+
+        <div className="overflow-hidden rounded-[20px] border border-[#dfe9e2] bg-white shadow-[0_12px_24px_rgba(19,45,42,0.04)]">
+          <table className="w-full min-w-[860px] text-sm">
+            <thead className="bg-[#eaf4f0] text-left text-[11px] font-semibold uppercase tracking-[0.18em] text-[#2e544d]">
+              <tr>
+                <th className="px-4 py-3">Fonte</th>
+                <th className="px-4 py-3">Nome</th>
+                <th className="px-4 py-3">CPF</th>
+                <th className="px-4 py-3">Valor da parcela</th>
+                <th className="px-4 py-3">Vencimento</th>
+                <th className="px-4 py-3">Observação</th>
+                <th className="px-4 py-3">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredContracts.length ? (
+                filteredContracts.map((contract) => {
+                  const items = entries.filter((entry) => entry.contract_id === contract.id);
+                  return (
+                    <tr key={contract.id} className="border-t border-[#edf1ee] transition-colors hover:bg-[#f6faf7]">
+                      <td className="px-4 py-3 font-semibold text-[#17342f]">{contract.title}</td>
+                      <td className="px-4 py-3 text-[#17342f]">{contract.buyer}</td>
+                      <td className="px-4 py-3 text-[#17342f]">{contract.cpf}</td>
+                      <td className="px-4 py-3 text-right font-semibold text-[#17342f]">{formatBRL(contract.installment_cents ?? 0)}</td>
+                      <td className="px-4 py-3 text-[#17342f]">{formatDateBR(contract.installment_due_date ?? today)}</td>
+                      <td className="px-4 py-3 text-[#4d6664]">{contract.note || '—'}</td>
+                      <td className="px-4 py-3">
+                        <div className="max-w-[180px]">{selector(contract, items)}</div>
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan={7} className="px-4 py-10 text-center text-[#5f7a77]">
+                    Nenhum contrato encontrado para a busca informada.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  }
+
+  if (!c) {
+    return <p className="py-12 text-center text-[#4d6664]">Contrato não encontrado.</p>;
+  }
+
+  return (
+    <div className="space-y-6 p-6">
+      <div className="rounded-[22px] border border-[#dfe9e2] bg-[#f3faf5] p-4 shadow-[0_12px_24px_rgba(19,45,42,0.04)]">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#5f7a77]">Controle financeiro</p>
+            <h1 className="mt-2 text-[2rem] font-black leading-tight text-[#17342f]">{c.title}</h1>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button asChild variant="outline" className="h-10 rounded-xl border-[#cfe2da] bg-white px-4 text-sm font-semibold text-[#17342f] hover:bg-[#edf7f2]">
+              <Link to="/crediario">
+                <ArrowLeft className="size-4" />
+                Todos os contratos
+              </Link>
+            </Button>
+            <Button
+              variant="brand"
+              className="h-10 rounded-xl bg-[#2f8175] px-4 text-sm font-semibold text-white shadow-[0_10px_20px_rgba(47,129,117,0.22)] hover:bg-[#286f66]"
+              onClick={onNew}
+            >
+              <Plus className="size-4" />
+              Novo contrato
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-[1.7fr_0.9fr]">
+        <section className="overflow-hidden rounded-[22px] border border-[#dfe9e2] bg-white shadow-[0_12px_24px_rgba(19,45,42,0.04)]">
+          <div className="border-b border-[#edf1ee] bg-[#f7faf7] px-4 py-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#5f7a77]">Parcelas</div>
+              <div className="flex items-center gap-2 text-[#5f7a77]">
+                <RefreshCw className="size-3.5" />
+                <span className="text-xs font-medium">Atualizado</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[780px] text-sm">
+              <thead className="bg-[#ecf6f1] text-[11px] font-semibold uppercase tracking-[0.16em] text-[#2c554d]">
+                <tr>
+                  <th className="px-4 py-3 text-left">Parcela</th>
+                  <th className="px-4 py-3 text-left">Vencimento</th>
+                  <th className="px-4 py-3 text-right">Valor</th>
+                  <th className="px-4 py-3 text-right">Recebido</th>
+                  <th className="px-4 py-3 text-center">Diferença</th>
+                  <th className="px-4 py-3 text-left">Observação</th>
+                  <th className="px-4 py-3 text-center">Comprovante</th>
+                  <th className="px-4 py-3 text-center">Ajuste</th>
+                </tr>
+              </thead>
+              <tbody>
+                {list.map((entry) => (
+                  <tr key={entry.id} className="border-t border-[#edf1ee] transition-colors hover:bg-[#f7faf7]">
+                    <td className="px-4 py-3 font-semibold text-[#17342f]">{String(entry.number).padStart(3, '0')}</td>
+                    <td className="px-4 py-3 text-[#17342f]">{formatDateBR(entry.due_date)}</td>
+                    <td className="px-4 py-3 text-right font-semibold text-[#17342f]">{formatBRL(entry.expected_cents)}</td>
+                    <td className="px-4 py-3 text-right text-[#17342f]">{formatBRL(entry.received_cents)}</td>
+                    <td className="px-4 py-3 text-center text-xs font-semibold text-[#215c52]">{diffLabel(entry.expected_cents, entry.received_cents)}</td>
+                    <td className="px-4 py-3 max-w-[240px] text-[#4d6664]">{entry.note || installmentNote(entry)}</td>
+                    <td className="px-4 py-3 text-center">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 rounded-lg text-[#2f8175] hover:bg-[#edf7f2]"
+                        aria-label={`Comprovantes de ${entry.title}`}
+                        title="Comprovantes"
+                        onClick={() => onFiles(entry)}
+                      >
+                        <Paperclip className="size-4" />
+                      </Button>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <div className="flex justify-center gap-1.5">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8 rounded-lg border-[#dfe9e2] bg-white text-[#17342f] hover:bg-[#edf7f2]"
+                          title={entry.received_date ? 'Corrigir recebimento' : 'Registrar recebimento'}
+                          onClick={() => onReceive(entry)}
+                        >
+                          <Check className="size-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8 rounded-lg border-[#dfe9e2] bg-white text-[#17342f] hover:bg-[#edf7f2]"
+                          title="Editar parcela"
+                          onClick={() => setEdit(entry)}
+                        >
+                          <Pencil className="size-4" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <aside className="space-y-5">
+          <div className="rounded-[22px] border border-[#dfe9e2] bg-white p-5 shadow-[0_12px_24px_rgba(19,45,42,0.04)]">
+            <div className="space-y-4">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#5f7a77]">Dados cadastrais</p>
+                <h2 className="mt-2 text-xl font-bold text-[#17342f]">{c.buyer}</h2>
+              </div>
+
+              <dl className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
+                {stat('Valor total', formatBRL(c.total_cents))}
+                {stat('Valor recebido', formatBRL(c.received_cents || 0), 'text-[#2f8175]')}
+                {stat('Vencimento', formatDateBR(c.due_date || today), 'text-[#17342f]')}
+                {stat('Status', contractStatus(c.status, list, today), 'text-[#17342f]')}
+              </dl>
+            </div>
+          </div>
+
+          <div className="rounded-[22px] border border-[#dfe9e2] bg-[#f7faf7] p-5 shadow-[0_12px_24px_rgba(19,45,42,0.04)]">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#5f7a77]">Observações</p>
+            <p className="mt-3 text-sm leading-6 text-[#385c58]">
+              {c.note || 'Sem observações adicionais para este contrato.'}
+            </p>
+          </div>
+        </aside>
+      </div>
+
+      {invoiceIds && <ContractInvoiceDialog contract={c} ids={invoiceIds} onClose={() => setInvoiceIds(null)} onSaved={onSaved} />}
+      {edit && <EditInstallment entry={edit} onClose={() => setEdit(null)} onSaved={onSaved} />}
+    </div>
+  );
+}
+
+function EditInstallment({
+  entry,
+  onClose,
+  onSaved,
+}: {
+  entry: RevenueEntry;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [due, setDue] = useState(entry.due_date);
+  const [value, setValue] = useState((entry.expected_cents / 100).toFixed(2).replace('.', ','));
+  const [note, setNote] = useState(entry.note);
+  const [busy, setBusy] = useState(false);
+  const editFn = useServerFn(editRevenueInstallment);
+
+  async function save(event: React.FormEvent) {
+    event.preventDefault();
+    const cents = parseBRL(value);
+    if (!cents) {
+      toast.error('Valor inválido');
+      return;
+    }
+
+    setBusy(true);
+    try {
+      await editFn({ data: { id: entry.id, due, cents, note } });
+      onSaved();
+      onClose();
+    } catch (error) {
+      toast.error((error as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Dialog open onOpenChange={(open) => !open && !busy && onClose()}>
+      <DialogContent className="max-w-xl rounded-[24px] border-[#dfe9e2] bg-white p-0 shadow-[0_18px_38px_rgba(19,45,42,0.14)]">
+        <DialogHeader className="border-b border-[#edf1ee] px-5 py-4">
+          <DialogTitle className="text-xl font-bold text-[#17342f]">Editar parcela {entry.number}</DialogTitle>
+          <DialogDescription className="text-sm text-[#5f7a77]">{entry.title}</DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={save} className="space-y-4 px-5 py-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="space-y-2 text-sm text-[#17342f]">
+              <span className="font-medium">Vencimento</span>
+              <Input value={due} onChange={(event) => setDue(event.target.value)} className="h-11 rounded-xl border-[#dfe9e2] bg-white text-[#17342f] focus-visible:ring-2 focus-visible:ring-[#7dc5b0]" />
+            </label>
+            <label className="space-y-2 text-sm text-[#17342f]">
+              <span className="font-medium">Valor</span>
+              <Input value={value} onChange={(event) => setValue(event.target.value)} className="h-11 rounded-xl border-[#dfe9e2] bg-white text-[#17342f] focus-visible:ring-2 focus-visible:ring-[#7dc5b0]" />
+            </label>
+          </div>
+
+          <label className="block space-y-2 text-sm text-[#17342f]">
+            <span className="font-medium">Observação</span>
+            <Textarea value={note} onChange={(event) => setNote(event.target.value)} className="min-h-[120px] rounded-xl border-[#dfe9e2] bg-white text-[#17342f] focus-visible:ring-2 focus-visible:ring-[#7dc5b0]" />
+          </label>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <Button type="button" variant="outline" className="h-10 rounded-xl border-[#dfe9e2] bg-white text-[#17342f] hover:bg-[#edf7f2]" onClick={onClose}>
+              Cancelar
+            </Button>
+            <Button type="submit" className="h-10 rounded-xl bg-[#2f8175] text-white shadow-[0_10px_20px_rgba(47,129,117,0.22)] hover:bg-[#286f66]" disabled={busy}>
+              {busy ? 'Salvando...' : 'Salvar'}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function parseBRL(value: string) {
+  const normalized = value
+    .replace('R$', '')
+    .replace('.', '')
+    .replace(',', '.')
+    .trim();
+
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? Math.round(parsed * 100) : null;
+}
+
+// @ts-expect-error -- compatibility helper for legacy callers
+const _legacy = parseBRL;
+
+export { _legacy };
